@@ -2,11 +2,17 @@
   "type": "module",
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "Server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node Server.js"
   },
+
+  "engines": {
+  "node": "20.x"
+}
+,
+
   "keywords": [],
   "author": "",
   "license": "ISC",
