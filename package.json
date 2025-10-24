@@ -7,12 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node Server.js"
   },
-
   "engines": {
-  "node": "20.x"
-}
-,
-
+    "node": "20.x"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -26,6 +23,7 @@
     "jszip": "^3.10.1",
     "mongoose": "^8.18.1",
     "multer": "^2.0.2",
+    "nodemailer": "^7.0.9",
     "nodemon": "^3.1.10"
   }
 }

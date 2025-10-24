@@ -1,15 +1,17 @@
+// Load env variables first
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cors from "cors";
 import notesRoutes from "./Routes/notes.js";
 import authRoutes from "./Routes/auth.js";
 import metaRoutes from "./Routes/meta.js";
 import adminRoutes from "./Routes/admin.js";
 
-dotenv.config();
-
 const app = express();
+
 
 // ===== Middleware =====
 app.use(express.json());
@@ -34,7 +36,6 @@ connectWithRetry();
 
 // ===== Routes =====
 app.get("/", (req, res) => res.send("API running..."));
-
 app.use("/api/notes", notesRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/meta", metaRoutes);

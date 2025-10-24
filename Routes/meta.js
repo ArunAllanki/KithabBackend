@@ -108,12 +108,10 @@ router.post("/subjects", async (req, res) => {
     console.error(err);
     if (err.code === 11000) {
       // duplicate index error
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Subject code already exists for this branch and semester",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Subject code already exists for this branch and semester",
+      });
     }
     res.status(500).json({ success: false, message: "Server error" });
   }
