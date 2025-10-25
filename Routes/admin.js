@@ -85,17 +85,51 @@ router.delete(
   authMiddleware,
   adminMiddleware,
   async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
       const { id } = req.params;
+
       if (!mongoose.Types.ObjectId.isValid(id))
         return res.status(400).json({ message: "Invalid ID" });
-      const deleted = await Regulation.findByIdAndDelete(id);
-      if (!deleted)
+
+      const regulation = await Regulation.findById(id).session(session);
+      if (!regulation)
         return res.status(404).json({ message: "Regulation not found" });
-      res.json({ message: "Regulation deleted" });
+
+      // 1️⃣ Delete all notes linked to this regulation
+      await Note.deleteMany({ regulation: id }).session(session);
+
+      // 2️⃣ Find branches under this regulation
+      const branches = await Branch.find({ regulation: id }).session(session);
+
+      for (const branch of branches) {
+        // 3️⃣ Delete subjects under each branch
+        await Subject.deleteMany({ branch: branch._id }).session(session);
+      }
+
+      // 4️⃣ Delete all branches
+      await Branch.deleteMany({ regulation: id }).session(session);
+
+      // 5️⃣ Delete the regulation itself
+      await Regulation.findByIdAndDelete(id).session(session);
+
+      // ✅ Commit transaction if all succeed
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({
+        message:
+          "Regulation and all related branches, subjects, and notes deleted successfully.",
+      });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
+      // ❌ Rollback if any error occurs
+      await session.abortTransaction();
+      session.endSession();
+
+      console.error("Transaction failed:", err);
+      res.status(500).json({ message: "Error during cascade delete" });
     }
   }
 );
@@ -152,20 +186,44 @@ router.delete(
   authMiddleware,
   adminMiddleware,
   async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
       const { id } = req.params;
+
       if (!mongoose.Types.ObjectId.isValid(id))
         return res.status(400).json({ message: "Invalid ID" });
-      const deleted = await Branch.findByIdAndDelete(id);
-      if (!deleted)
+
+      const branch = await Branch.findById(id).session(session);
+      if (!branch)
         return res.status(404).json({ message: "Branch not found" });
-      res.json({ message: "Branch deleted" });
+
+      // 1️⃣ Delete all notes linked to this branch
+      await Note.deleteMany({ branch: id }).session(session);
+
+      // 2️⃣ Delete all subjects under this branch
+      await Subject.deleteMany({ branch: id }).session(session);
+
+      // 3️⃣ Delete the branch itself
+      await Branch.findByIdAndDelete(id).session(session);
+
+      // ✅ Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({ message: "Branch and related subjects/notes deleted successfully." });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
+      // ❌ Rollback
+      await session.abortTransaction();
+      session.endSession();
+
+      console.error("Branch delete transaction failed:", err);
+      res.status(500).json({ message: "Error deleting branch" });
     }
   }
 );
+
 
 // -------------------- Subjects CRUD --------------------
 router.get("/subjects", authMiddleware, adminMiddleware, async (req, res) => {
@@ -221,20 +279,41 @@ router.delete(
   authMiddleware,
   adminMiddleware,
   async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
       const { id } = req.params;
+
       if (!mongoose.Types.ObjectId.isValid(id))
         return res.status(400).json({ message: "Invalid ID" });
-      const deleted = await Subject.findByIdAndDelete(id);
-      if (!deleted)
+
+      const subject = await Subject.findById(id).session(session);
+      if (!subject)
         return res.status(404).json({ message: "Subject not found" });
-      res.json({ message: "Subject deleted" });
+
+      // 1️⃣ Delete all notes linked to this subject
+      await Note.deleteMany({ subject: id }).session(session);
+
+      // 2️⃣ Delete the subject itself
+      await Subject.findByIdAndDelete(id).session(session);
+
+      // ✅ Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({ message: "Subject and related notes deleted successfully." });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Server error" });
+      // ❌ Rollback
+      await session.abortTransaction();
+      session.endSession();
+
+      console.error("Subject delete transaction failed:", err);
+      res.status(500).json({ message: "Error deleting subject" });
     }
   }
 );
+
 
 // -------------------- Faculty CRUD --------------------
 // -------------------- Faculty CRUD --------------------
