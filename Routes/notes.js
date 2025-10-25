@@ -154,7 +154,7 @@ router.get("/my-uploads", authMiddleware, async (req, res) => {
 // });
 
 // ------------------- Get Notes by Subject -------------------
-router.get("/subject/:id", authMiddleware, async (req, res) => {
+router.get("/subject/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -199,7 +199,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Download multiple notes as a ZIP
-router.post("/download-zip", authMiddleware, async (req, res) => {
+router.post("/download-zip", async (req, res) => {
   try {
     const { noteIds } = req.body; // Array of note IDs
     if (!noteIds || !noteIds.length) {
@@ -235,40 +235,40 @@ router.post("/download-zip", authMiddleware, async (req, res) => {
 });
 
 // ------------------- Add/Remove Favorites -------------------
-router.post("/:noteId/favorite", authMiddleware, async (req, res) => {
-  try {
-    const student = await Student.findById(req.user.id);
-    if (!student) return res.status(404).json({ message: "Student not found" });
+// router.post("/:noteId/favorite", authMiddleware, async (req, res) => {
+//   try {
+//     const student = await Student.findById(req.user.id);
+//     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    if (!student.favoriteNotes.includes(req.params.noteId)) {
-      student.favoriteNotes.push(req.params.noteId);
-      await student.save();
-    }
-    res.json({
-      message: "Added to favorites",
-      favoriteNotes: student.favoriteNotes,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
+//     if (!student.favoriteNotes.includes(req.params.noteId)) {
+//       student.favoriteNotes.push(req.params.noteId);
+//       await student.save();
+//     }
+//     res.json({
+//       message: "Added to favorites",
+//       favoriteNotes: student.favoriteNotes,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
 
-router.delete("/:noteId/favorite", authMiddleware, async (req, res) => {
-  try {
-    const student = await Student.findById(req.user.id);
-    if (!student) return res.status(404).json({ message: "Student not found" });
+// router.delete("/:noteId/favorite", authMiddleware, async (req, res) => {
+//   try {
+//     const student = await Student.findById(req.user.id);
+//     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    student.favoriteNotes = student.favoriteNotes.filter(
-      (id) => id.toString() !== req.params.noteId
-    );
-    await student.save();
-    res.json({
-      message: "Removed from favorites",
-      favoriteNotes: student.favoriteNotes,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
+//     student.favoriteNotes = student.favoriteNotes.filter(
+//       (id) => id.toString() !== req.params.noteId
+//     );
+//     await student.save();
+//     res.json({
+//       message: "Removed from favorites",
+//       favoriteNotes: student.favoriteNotes,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// });
 
 export default router;
