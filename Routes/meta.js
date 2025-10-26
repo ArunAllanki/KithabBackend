@@ -5,10 +5,7 @@ import Subject from "../Models/Subject.js";
 
 const router = express.Router();
 
-/* ========================
-   REGULATIONS ROUTES
-======================== */
-// GET all regulations
+//reg routes
 router.get("/regulations", async (req, res) => {
   try {
     const regulations = await Regulation.find().sort({ name: 1 });
@@ -19,7 +16,6 @@ router.get("/regulations", async (req, res) => {
   }
 });
 
-// POST create a regulation
 router.post("/regulations", async (req, res) => {
   try {
     const { name, numberOfSemesters } = req.body;
@@ -37,10 +33,7 @@ router.post("/regulations", async (req, res) => {
   }
 });
 
-/* ========================
-   BRANCHES ROUTES
-======================== */
-// GET all branches
+//branch routes
 router.get("/branches", async (req, res) => {
   try {
     const branches = await Branch.find()
@@ -53,7 +46,6 @@ router.get("/branches", async (req, res) => {
   }
 });
 
-// POST create a branch
 router.post("/branches", async (req, res) => {
   try {
     const { name, code, regulation } = req.body;
@@ -71,10 +63,7 @@ router.post("/branches", async (req, res) => {
   }
 });
 
-/* ========================
-   SUBJECTS ROUTES
-======================== */
-// GET all subjects, optional filtering by branch or semester via query
+//sub routes
 router.get("/subjects", async (req, res) => {
   try {
     const { branch, sem } = req.query;
@@ -92,7 +81,6 @@ router.get("/subjects", async (req, res) => {
   }
 });
 
-// POST create a subject
 router.post("/subjects", async (req, res) => {
   try {
     const { name, code, branch, semester } = req.body;
@@ -107,7 +95,6 @@ router.post("/subjects", async (req, res) => {
   } catch (err) {
     console.error(err);
     if (err.code === 11000) {
-      // duplicate index error
       return res.status(400).json({
         success: false,
         message: "Subject code already exists for this branch and semester",

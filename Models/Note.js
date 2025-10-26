@@ -17,7 +17,7 @@ const noteSchema = new mongoose.Schema({
     ref: "Branch",
     required: true,
   },
-  semester: { type: String, required: true }, // keep as string or number, since it’s simple
+  semester: { type: String, required: true },
   file: {
     data: Buffer,
     contentType: String,

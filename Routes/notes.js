@@ -1,4 +1,3 @@
-// backend/Routes/notes.js
 import express from "express";
 import multer from "multer";
 import mongoose from "mongoose";
@@ -14,7 +13,7 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// ------------------- Upload Notes (Single or Multiple) -------------------
+//notes
 router.post(
   "/upload",
   authMiddleware,
@@ -35,7 +34,6 @@ router.post(
           .json({ message: "Only faculty can upload notes" });
 
       const { regulation, subject, branch, semester } = req.body;
-
       if (
         !regulation ||
         !subject ||
@@ -60,16 +58,13 @@ router.post(
           branch,
           semester,
           file: { data: file.buffer, contentType: file.mimetype },
-          uploadedBy: req.user.id, // ✅ using id instead of _id
+          uploadedBy: req.user.id,
         });
 
         const savedNote = await newNote.save();
-
-        // update faculty uploads
         await Faculty.findByIdAndUpdate(req.user.id, {
           $push: { uploadedNotes: savedNote._id },
         });
-
         savedNotes.push({
           ...savedNote.toObject(),
           fileUrl: `/notes/${savedNote._id}`,
@@ -86,25 +81,6 @@ router.post(
   }
 );
 
-// ------------------- Get Faculty Uploads -------------------
-// router.get("/my-uploads", authMiddleware, async (req, res) => {
-//   try {
-//     const faculty = await Faculty.findById(req.user.id).populate(
-//       "uploadedNotes"
-//     );
-//     if (!faculty) return res.status(404).json({ message: "Faculty not found" });
-
-//     const notesWithUrl = faculty.uploadedNotes.map((note) => ({
-//       ...note.toObject(),
-//       fileUrl: `/notes/${note._id}`,
-//     }));
-
-//     res.json(notesWithUrl);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// });
 router.get("/my-uploads", authMiddleware, async (req, res) => {
   try {
     // Fetch faculty and populate uploaded notes
@@ -119,14 +95,13 @@ router.get("/my-uploads", authMiddleware, async (req, res) => {
 
     if (!faculty) return res.status(404).json({ message: "Faculty not found" });
 
-    // Map notes to include fileUrl
     const notesWithUrl = faculty.uploadedNotes.map((note) => ({
       _id: note._id,
       title: note.title,
       semester: note.semester,
-      branch: note.branch, // populated object with name
-      subject: note.subject, // populated object with name & code
-      regulation: note.regulation, // populated object with name
+      branch: note.branch, // name
+      subject: note.subject, // name & code
+      regulation: note.regulation, // name
       uploadedBy: note.uploadedBy,
     }));
 
@@ -153,7 +128,7 @@ router.get("/my-uploads", authMiddleware, async (req, res) => {
 //   }
 // });
 
-// ------------------- Get Notes by Subject -------------------
+//notes by sub
 router.get("/subject/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -167,7 +142,7 @@ router.get("/subject/:id", async (req, res) => {
       .populate("branch", "name")
       .populate("subject", "name code")
       .populate("uploadedBy", "name email")
-      .select("-file"); // exclude file field
+      .select("-file");
 
     if (!notes.length) {
       return res
@@ -198,7 +173,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Download multiple notes as a ZIP
+//zip download
 router.post("/download-zip", async (req, res) => {
   try {
     const { noteIds } = req.body; // Array of note IDs

@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); // must be first line
-
+dotenv.config();
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -12,9 +11,7 @@ const router = express.Router();
 
 console.log("ENV CHECK:", process.env.SMTP_HOST, process.env.JWT_SECRET);
 
-// -----------------------------
 // Nodemailer transporter
-// -----------------------------
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
@@ -25,89 +22,74 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// optional: test connection
 transporter.verify((error, success) => {
   if (error) console.error("[SMTP Connection Failed]", error);
   else console.log("[SMTP Ready: Gmail connected]");
 });
 
-// -----------------------------
-// Helper: Generate JWT
-// -----------------------------
+//  JWT
 const generateToken = (id, role) =>
   jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-// -----------------------------
-// Student Registration
-// -----------------------------
-router.post("/student/register", async (req, res) => {
-  const { name, email, password, branch, rollNumber } = req.body;
+// router.post("/student/register", async (req, res) => {
+//   const { name, email, password, branch, rollNumber } = req.body;
 
-  try {
-    // Validation: rollNumber format & length
-    const rollRegex = /^(22ME|23ME|24ME|25ME)/;
-    if (!rollRegex.test(rollNumber)) {
-      return res.status(400).json({
-        message: "Invalid Roll Number ",
-      });
-    }
-    if (rollNumber.length !== 10) {
-      return res.status(400).json({
-        message: "Invalid Roll Number",
-      });
-    }
+//   try {
+//     const rollRegex = /^(22ME|23ME|24ME|25ME)/;
+//     if (!rollRegex.test(rollNumber)) {
+//       return res.status(400).json({
+//         message: "Invalid Roll Number ",
+//       });
+//     }
+//     if (rollNumber.length !== 10) {
+//       return res.status(400).json({
+//         message: "Invalid Roll Number",
+//       });
+//     }
 
-    // Check email
-    const emailExists = await Student.findOne({ email });
-    if (emailExists) {
-      return res.status(400).json({ message: "Email already used" });
-    }
+//     const emailExists = await Student.findOne({ email });
+//     if (emailExists) {
+//       return res.status(400).json({ message: "Email already used" });
+//     }
+//     const rollExists = await Student.findOne({ rollNumber });
+//     if (rollExists) {
+//       return res.status(400).json({ message: "Roll Number already used" });
+//     }
 
-    // Check roll number
-    const rollExists = await Student.findOne({ rollNumber });
-    if (rollExists) {
-      return res.status(400).json({ message: "Roll Number already used" });
-    }
+//     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+//     const student = await Student.create({
+//       name,
+//       email,
+//       password: hashedPassword,
+//       branch,
+//       rollNumber,
+//     });
 
-    const student = await Student.create({
-      name,
-      email,
-      password: hashedPassword,
-      branch,
-      rollNumber,
-    });
+//     const token = generateToken(student._id, "student");
 
-    const token = generateToken(student._id, "student");
+//     res.status(201).json({
+//       message: "Student registered successfully",
+//       student: {
+//         id: student._id,
+//         name,
+//         email,
+//         branch,
+//         rollNumber,
+//         role: "student",
+//       },
+//       token,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// });
 
-    res.status(201).json({
-      message: "Student registered successfully",
-      student: {
-        id: student._id,
-        name,
-        email,
-        branch,
-        rollNumber,
-        role: "student",
-      },
-      token,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// -----------------------------
-// Faculty Registration
-// -----------------------------
 router.post("/faculty/register", async (req, res) => {
   const { name, email, password, branch, employeeId, designation } = req.body;
 
   try {
-    // Validation: employeeId format & length
     const empRegex = /^RCEEME/;
     if (!empRegex.test(employeeId)) {
       return res.status(400).json({
@@ -165,36 +147,33 @@ router.post("/faculty/register", async (req, res) => {
   }
 });
 
-// -----------------------------
-// Login Routes
-// -----------------------------
-router.post("/student/login", async (req, res) => {
-  const { rollNumber, password } = req.body;
-  try {
-    const student = await Student.findOne({ rollNumber });
-    if (!student) return res.status(400).json({ message: "No user found" });
+// router.post("/student/login", async (req, res) => {
+//   const { rollNumber, password } = req.body;
+//   try {
+//     const student = await Student.findOne({ rollNumber });
+//     if (!student) return res.status(400).json({ message: "No user found" });
 
-    const isMatch = await bcrypt.compare(password, student.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+//     const isMatch = await bcrypt.compare(password, student.password);
+//     if (!isMatch)
+//       return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = generateToken(student._id, "student");
-    res.json({
-      message: "Login successful",
-      student: {
-        id: student._id,
-        name: student.name,
-        rollNumber: student.rollNumber,
-        branch: student.branch,
-        role: "student",
-      },
-      token,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+//     const token = generateToken(student._id, "student");
+//     res.json({
+//       message: "Login successful",
+//       student: {
+//         id: student._id,
+//         name: student.name,
+//         rollNumber: student.rollNumber,
+//         branch: student.branch,
+//         role: "student",
+//       },
+//       token,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// });
 
 router.post("/faculty/login", async (req, res) => {
   const { employeeId, password } = req.body;
@@ -244,11 +223,8 @@ router.post("/admin/login", (req, res) => {
   }
 });
 
-// -----------------------------
-// Forgot Password
-// -----------------------------
 router.post("/forgot-password", async (req, res) => {
-  const { role, id } = req.body; // id = rollNumber or employeeId
+  const { role, id } = req.body;
   try {
     let user;
     if (role === "student") user = await Student.findOne({ rollNumber: id });
@@ -281,9 +257,6 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// -----------------------------
-// Reset Password
-// -----------------------------
 router.post("/reset-password/:token", async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;

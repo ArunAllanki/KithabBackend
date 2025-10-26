@@ -1,4 +1,3 @@
-// backend/Routes/admin.js
 import express from "express";
 import mongoose from "mongoose";
 
@@ -13,7 +12,7 @@ import { authMiddleware } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// ===== Admin Middleware =====
+//admin middleware
 export const adminMiddleware = (req, res, next) => {
   if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({ message: "Admin access required" });
@@ -21,7 +20,7 @@ export const adminMiddleware = (req, res, next) => {
   next();
 };
 
-// -------------------- Regulations CRUD --------------------
+//regs CRUD
 router.get(
   "/regulations",
   authMiddleware,
@@ -98,24 +97,15 @@ router.delete(
       if (!regulation)
         return res.status(404).json({ message: "Regulation not found" });
 
-      // 1️⃣ Delete all notes linked to this regulation
       await Note.deleteMany({ regulation: id }).session(session);
 
-      // 2️⃣ Find branches under this regulation
       const branches = await Branch.find({ regulation: id }).session(session);
 
       for (const branch of branches) {
-        // 3️⃣ Delete subjects under each branch
         await Subject.deleteMany({ branch: branch._id }).session(session);
       }
-
-      // 4️⃣ Delete all branches
       await Branch.deleteMany({ regulation: id }).session(session);
-
-      // 5️⃣ Delete the regulation itself
       await Regulation.findByIdAndDelete(id).session(session);
-
-      // ✅ Commit transaction if all succeed
       await session.commitTransaction();
       session.endSession();
 
@@ -124,7 +114,6 @@ router.delete(
           "Regulation and all related branches, subjects, and notes deleted successfully.",
       });
     } catch (err) {
-      // ❌ Rollback if any error occurs
       await session.abortTransaction();
       session.endSession();
 
@@ -134,7 +123,7 @@ router.delete(
   }
 );
 
-// -------------------- Branches CRUD --------------------
+//branch CRUD
 router.get("/branches", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const branches = await Branch.find().populate("regulation", "name");
@@ -196,25 +185,18 @@ router.delete(
         return res.status(400).json({ message: "Invalid ID" });
 
       const branch = await Branch.findById(id).session(session);
-      if (!branch)
-        return res.status(404).json({ message: "Branch not found" });
+      if (!branch) return res.status(404).json({ message: "Branch not found" });
 
-      // 1️⃣ Delete all notes linked to this branch
       await Note.deleteMany({ branch: id }).session(session);
-
-      // 2️⃣ Delete all subjects under this branch
       await Subject.deleteMany({ branch: id }).session(session);
-
-      // 3️⃣ Delete the branch itself
       await Branch.findByIdAndDelete(id).session(session);
 
-      // ✅ Commit transaction
       await session.commitTransaction();
       session.endSession();
-
-      res.json({ message: "Branch and related subjects/notes deleted successfully." });
+      res.json({
+        message: "Branch and related subjects/notes deleted successfully.",
+      });
     } catch (err) {
-      // ❌ Rollback
       await session.abortTransaction();
       session.endSession();
 
@@ -224,8 +206,7 @@ router.delete(
   }
 );
 
-
-// -------------------- Subjects CRUD --------------------
+//subs CURD
 router.get("/subjects", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const subjects = await Subject.find()
@@ -291,20 +272,13 @@ router.delete(
       const subject = await Subject.findById(id).session(session);
       if (!subject)
         return res.status(404).json({ message: "Subject not found" });
-
-      // 1️⃣ Delete all notes linked to this subject
       await Note.deleteMany({ subject: id }).session(session);
-
-      // 2️⃣ Delete the subject itself
       await Subject.findByIdAndDelete(id).session(session);
-
-      // ✅ Commit transaction
       await session.commitTransaction();
       session.endSession();
 
       res.json({ message: "Subject and related notes deleted successfully." });
     } catch (err) {
-      // ❌ Rollback
       await session.abortTransaction();
       session.endSession();
 
@@ -314,11 +288,8 @@ router.delete(
   }
 );
 
+//faculty CRUD
 
-// -------------------- Faculty CRUD --------------------
-// -------------------- Faculty CRUD --------------------
-
-// GET all faculty (exclude password)
 router.get("/faculty", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const faculty = await Faculty.find()
@@ -331,14 +302,11 @@ router.get("/faculty", authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
-// POST create faculty with password hashing
 router.post("/faculty", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { name, email, password, employeeId, designation } = req.body;
     if (!name || !email || !password || !employeeId || !designation)
       return res.status(400).json({ message: "Required fields missing" });
-
-    // Check duplicates
     if (await Faculty.findOne({ email }))
       return res.status(400).json({ message: "Email already exists" });
     if (await Faculty.findOne({ employeeId }))
@@ -366,8 +334,6 @@ router.post("/faculty", authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
-// PUT edit faculty with password hashing and duplicate checks
-// PUT edit faculty with duplicate checks for email and employeeId
 router.put(
   "/faculty/:id",
   authMiddleware,
@@ -383,8 +349,6 @@ router.put(
       const faculty = await Faculty.findById(id);
       if (!faculty)
         return res.status(404).json({ message: "Faculty not found" });
-
-      // Check for duplicate email (excluding current faculty)
       if (email && email !== faculty.email) {
         const emailExists = await Faculty.findOne({
           email,
@@ -395,7 +359,6 @@ router.put(
         faculty.email = email;
       }
 
-      // Check for duplicate employeeId (excluding current faculty)
       if (employeeId && employeeId !== faculty.employeeId) {
         const empExists = await Faculty.findOne({
           employeeId,
@@ -428,7 +391,6 @@ router.put(
   }
 );
 
-// DELETE faculty
 router.delete(
   "/faculty/:id",
   authMiddleware,
@@ -451,7 +413,6 @@ router.delete(
   }
 );
 
-// GET uploads of a faculty
 router.get(
   "/faculty/:id/uploads",
   authMiddleware,
@@ -482,7 +443,7 @@ router.get(
   }
 );
 
-// -------------------- Notes --------------------
+//notes CRUD
 router.get("/notes", authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { regulation, branch, semester, subject } = req.query;
