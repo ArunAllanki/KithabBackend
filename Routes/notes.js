@@ -86,6 +86,7 @@ router.get("/my-uploads", authMiddleware, async (req, res) => {
     // Fetch faculty and populate uploaded notes
     const faculty = await Faculty.findById(req.user.id).populate({
       path: "uploadedNotes",
+      options: { sort: { createdAt: -1 } },
       populate: [
         { path: "branch", select: "name" },
         { path: "subject", select: "name code" },
@@ -102,7 +103,6 @@ router.get("/my-uploads", authMiddleware, async (req, res) => {
       branch: note.branch, // name
       subject: note.subject, // name & code
       regulation: note.regulation, // name
-      uploadedBy: note.uploadedBy,
     }));
 
     res.json(notesWithUrl);

@@ -9,23 +9,23 @@ import Student from "../Models/Student.js";
 
 const router = express.Router();
 
-console.log("ENV CHECK:", process.env.SMTP_HOST, process.env.JWT_SECRET);
+// console.log("ENV CHECK:", process.env.SMTP_HOST, process.env.JWT_SECRET);
 
 // Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: process.env.SMTP_SECURE === "true", // true if using SSL/TLS
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+// const transporter = nodemailer.createTransport({
+//   host: process.env.SMTP_HOST,
+//   port: Number(process.env.SMTP_PORT),
+//   secure: process.env.SMTP_SECURE === "true", // true if using SSL/TLS
+//   auth: {
+//     user: process.env.SMTP_USER,
+//     pass: process.env.SMTP_PASS,
+//   },
+// });
 
-transporter.verify((error, success) => {
-  if (error) console.error("[SMTP Connection Failed]", error);
-  else console.log("[SMTP Ready: Gmail connected]");
-});
+// transporter.verify((error, success) => {
+//   if (error) console.error("[SMTP Connection Failed]", error);
+//   else console.log("[SMTP Ready: Gmail connected]");
+// });
 
 //  JWT
 const generateToken = (id, role) =>
